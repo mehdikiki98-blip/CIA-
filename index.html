@@ -34,7 +34,7 @@
 
         .container {
             width: 100%;
-            max-width: 900px;
+            max-width: 950px;
             background-color: var(--panel-bg);
             border: 1px solid var(--border-color);
             border-top: 4px solid var(--accent-gold);
@@ -75,7 +75,7 @@
 
         input, select {
             width: 100%;
-            padding: 12px;
+            padding: 10px;
             background: #0d1117;
             border: 1px solid var(--border-color);
             border-radius: 4px;
@@ -89,8 +89,7 @@
         }
 
         button {
-            width: 100%;
-            padding: 12px;
+            padding: 10px 15px;
             background: var(--accent-gold);
             color: #000;
             font-weight: bold;
@@ -102,6 +101,10 @@
 
         button:hover {
             background: #b59228;
+        }
+
+        .btn-full {
+            width: 100%;
         }
 
         .btn-danger {
@@ -117,7 +120,6 @@
             padding: 6px 10px;
             font-size: 12px;
             width: auto;
-            margin: 2px;
         }
 
         .hidden {
@@ -166,6 +168,17 @@
             align-items: center;
             margin-bottom: 20px;
         }
+
+        .action-flex {
+            display: flex;
+            gap: 8px;
+            align-items: center;
+        }
+
+        .action-flex select {
+            width: 180px;
+            padding: 6px;
+        }
     </style>
 </head>
 <body>
@@ -186,13 +199,11 @@
             </div>
             <div class="form-group">
                 <label for="initial-rank">الرتبة الأولية عند التسجيل:</label>
-                <select id="initial-rank">
-                    <option value="مستجد">مستجد</option>
-                    <option value="جندي">جندي</option>
-                    <option value="جندي اول">جندي اول</option>
+                <select id="initial-rank" disabled>
+                    <option value="مستجد" selected>مستجد</option>
                 </select>
             </div>
-            <button type="submit">دخول النظام</button>
+            <button type="submit" class="btn-full">دخول النظام</button>
         </form>
     </div>
 
@@ -220,7 +231,7 @@
                 <tr>
                     <th>الاسم / الكود</th>
                     <th>الرتبة الحالية</th>
-                    <th id="admin-actions-header" class="hidden">التحكم بالترقية / التنزيل</th>
+                    <th id="admin-actions-header" class="hidden">تعديل الرتبة / الإجراءات</th>
                 </tr>
             </thead>
             <tbody id="agents-table-body">
@@ -231,7 +242,7 @@
 </div>
 
 <script>
-    // الرتب العسكرية الكاملة كما في الصور بالترتيب التنازلي إلى التصاعدي
+    // التسلسل الكامل للرتب
     const RANKS = [
         "مستجد",
         "جندي",
@@ -249,10 +260,14 @@
         "عقيد",
         "عميد",
         "فريق",
-        "فريق اول"
+        "فريق اول",
+        "مستشار رئيس الاستخبارات",
+        "نائب رئيس الاستخبارات",
+        "قائد الاستخبارات"
     ];
 
-    const ADMIN_SECRET = "CIA2026";
+    // تم تغيير الكود السري إلى ciaontop
+    const ADMIN_SECRET = "ciaontop";
     let isAdmin = false;
     let currentUser = null;
 
@@ -268,7 +283,7 @@
     document.getElementById('login-form').addEventListener('submit', function(e) {
         e.preventDefault();
         const name = document.getElementById('username').value.trim();
-        const rank = document.getElementById('initial-rank').value;
+        const rank = "مستجد";
 
         if (!name) return;
 
@@ -318,11 +333,17 @@
             
             let actionsHTML = '';
             if (isAdmin) {
+                let optionsHTML = RANKS.map(r => `<option value="${r}" ${r === agent.rank ? 'selected' : ''}>${r}</option>`).join('');
+
                 actionsHTML = `
-                    <td class="admin-actions">
-                        <button class="btn-sm" onclick="changeRank(${index}, 1)">▲ ترقية</button>
-                        <button class="btn-sm btn-danger" onclick="changeRank(${index}, -1)">▼ تنزيل</button>
-                        <button class="btn-sm btn-danger" style="background:#555;" onclick="deleteAgent(${index})">🗑️ طرد</button>
+                    <td>
+                        <div class="action-flex">
+                            <select id="rank-select-${index}">
+                                ${optionsHTML}
+                            </select>
+                            <button class="btn-sm" onclick="setDirectRank(${index})">تطبيق</button>
+                            <button class="btn-sm btn-danger" style="background:#555;" onclick="deleteAgent(${index})">🗑️ طرد</button>
+                        </div>
                     </td>
                 `;
             } else {
@@ -338,23 +359,14 @@
         });
     }
 
-    function changeRank(index, direction) {
+    function setDirectRank(index) {
+        const select = document.getElementById(`rank-select-${index}`);
+        const selectedRank = select.value;
+
         let agents = getAgents();
-        let currentRankIndex = RANKS.indexOf(agents[index].rank);
-
-        if (currentRankIndex === -1) currentRankIndex = 0;
-
-        let newIndex = currentRankIndex + direction;
-
-        if (newIndex >= 0 && newIndex < RANKS.length) {
-            agents[index].rank = RANKS[newIndex];
-            saveAgents(agents);
-            renderTable();
-        } else if (newIndex >= RANKS.length) {
-            alert("وصل لأعلى رتبة (فريق اول)!");
-        } else {
-            alert("وصل لأدنى رتبة (مستجد)!");
-        }
+        agents[index].rank = selectedRank;
+        saveAgents(agents);
+        renderTable();
     }
 
     function deleteAgent(index) {
