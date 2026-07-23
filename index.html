@@ -179,6 +179,12 @@
             width: 180px;
             padding: 6px;
         }
+
+        .error-msg {
+            color: var(--accent-red);
+            font-size: 13px;
+            margin-top: 10px;
+        }
     </style>
 </head>
 <body>
@@ -186,46 +192,51 @@
 <div class="container">
     <div class="header">
         <h1>🌐 نظام الاستخبارات العامة | CIA DATABASE</h1>
-        <p>نظام إلكتروني سري لمتابعة وإدارة الرتب والعملاء</p>
+        <p>نظام إلكتروني سري لمتابعة وإدارة الرتب والعملاء (متصل أونلاين)</p>
     </div>
 
     <!-- 1. صفحة التسجيل والدخول -->
     <div id="login-section">
-        <h2 style="margin-bottom: 15px; font-size: 18px;">تسجيل الدخول / الانضمام للنظام</h2>
+        <h2 style="margin-bottom: 15px; font-size: 18px;">تسجيل الدخول / إنشاء حساب عميل</h2>
         <form id="login-form">
             <div class="form-group">
                 <label for="username">الاسم الكامل / الرمز:</label>
                 <input type="text" id="username" placeholder="أدخل اسمك..." required>
             </div>
             <div class="form-group">
-                <label for="initial-rank">الرتبة الأولية عند التسجيل:</label>
+                <label for="password">كلمة السر الخاصة بك:</label>
+                <input type="password" id="password" placeholder="أدخل كلمة السر..." required>
+            </div>
+            <div class="form-group">
+                <label for="initial-rank">الرتبة الأولية عند التسجيل الجديد:</label>
                 <select id="initial-rank" disabled>
                     <option value="مستجد" selected>مستجد</option>
                 </select>
             </div>
-            <button type="submit" class="btn-full">دخول النظام</button>
+            <button type="submit" class="btn-full">دخول / إنشاء حساب</button>
+            <p id="login-error" class="error-msg"></p>
         </form>
     </div>
 
     <!-- 2. لوحة النظام الرئيسية -->
     <div id="dashboard-section" class="hidden">
         <div class="top-bar">
-            <div>أهلاً بك، <span id="current-user-display" style="color: var(--accent-gold); font-weight: bold;"></span></div>
+            <div>أهلاً بك العميل: <span id="current-user-display" style="color: var(--accent-gold); font-weight: bold;"></span> (<span id="current-rank-display" style="color: #fff;"></span>)</div>
             <button class="btn-danger btn-sm" onclick="logout()">تسجيل الخروج</button>
         </div>
 
         <!-- منطقة تفعيل وضع الأدمن -->
-        <div class="admin-box">
-            <h3 style="font-size: 14px; margin-bottom: 10px; color: var(--accent-gold);">🔓 صلاحيات الإدارة العليا (قيادة الجهاز)</h3>
+        <div class="admin-box" id="admin-box-container">
+            <h3 style="font-size: 14px; margin-bottom: 10px; color: var(--accent-gold);">🔓 صلاحيات التعديل (إدخال الكود)</h3>
             <div style="display: flex; gap: 10px;">
-                <input type="password" id="admin-code-input" placeholder="أدخل كود الأدمن السرّي...">
+                <input type="password" id="admin-code-input" placeholder="أدخل كود التفعيل لتعديل من هم أقل منك رتبة...">
                 <button style="width: 150px;" onclick="unlockAdmin()">تفعيل</button>
             </div>
             <p id="admin-msg" style="font-size: 12px; margin-top: 5px;"></p>
         </div>
 
         <!-- قائمة العملاء والترقيات -->
-        <h3>📋 سجل العملاء والرتب الحالية</h3>
+        <h3>📋 سجل العملاء والرتب الحالية (مباشر أونلاين)</h3>
         <table>
             <thead>
                 <tr>
@@ -241,8 +252,18 @@
     </div>
 </div>
 
-<script>
-    // التسلسل الكامل للرتب
+<!-- Firebase SDK Modules -->
+<script type="module">
+    import { initializeApp } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-app.js";
+    import { getDatabase, ref, set, get, child, onValue, remove } from "https://www.gstatic.com/firebasejs/10.8.0/firebase-database.js";
+
+    const firebaseConfig = {
+        databaseURL: "https://cia-system-default-rtdb.firebaseio.com"
+    };
+
+    const app = initializeApp(firebaseConfig);
+    const db = getDatabase(app);
+
     const RANKS = [
         "مستجد",
         "جندي",
@@ -266,86 +287,120 @@
         "قائد الاستخبارات"
     ];
 
-    // تم تغيير الكود السري إلى ciaontop
     const ADMIN_SECRET = "ciaontop";
-    let isAdmin = false;
+    let isCodeUnlocked = false;
     let currentUser = null;
+    let globalAgents = [];
 
-    function getAgents() {
-        const data = localStorage.getItem('cia_agents');
-        return data ? JSON.parse(data) : [];
-    }
+    const agentsRef = ref(db, 'agents');
+    onValue(agentsRef, (snapshot) => {
+        const data = snapshot.val();
+        globalAgents = [];
+        if (data) {
+            Object.keys(data).forEach(key => {
+                globalAgents.push({ id: key, ...data[key] });
+            });
+        }
+        renderTable();
+    });
 
-    function saveAgents(agents) {
-        localStorage.setItem('cia_agents', JSON.stringify(agents));
-    }
-
-    document.getElementById('login-form').addEventListener('submit', function(e) {
+    document.getElementById('login-form').addEventListener('submit', async function(e) {
         e.preventDefault();
         const name = document.getElementById('username').value.trim();
-        const rank = "مستجد";
+        const pass = document.getElementById('password').value.trim();
+        const errorMsg = document.getElementById('login-error');
+        errorMsg.innerText = '';
 
-        if (!name) return;
+        if (!name || !pass) return;
 
-        let agents = getAgents();
-        let existingUser = agents.find(a => a.name.toLowerCase() === name.toLowerCase());
+        const userKey = name.toLowerCase().replace(/[^a-z0-9]/g, "_");
+        const userRef = child(ref(db), `agents/${userKey}`);
 
-        if (!existingUser) {
-            existingUser = { name: name, rank: rank };
-            agents.push(existingUser);
-            saveAgents(agents);
+        try {
+            const snapshot = await get(userRef);
+            if (snapshot.exists()) {
+                const userData = snapshot.val();
+                if (userData.password === pass) {
+                    currentUser = { id: userKey, ...userData };
+                    showDashboard();
+                } else {
+                    errorMsg.innerText = "✕ كلمة السر غير صحيحة لهذا الاسم!";
+                }
+            } else {
+                const newUser = { name: name, password: pass, rank: "مستجد" };
+                await set(ref(db, `agents/${userKey}`), newUser);
+                currentUser = { id: userKey, ...newUser };
+                showDashboard();
+            }
+        } catch (err) {
+            errorMsg.innerText = "حدث خطأ في الاتصال بالسيرفر!";
         }
-
-        currentUser = existingUser;
-        showDashboard();
     });
 
     function showDashboard() {
         document.getElementById('login-section').classList.add('hidden');
         document.getElementById('dashboard-section').classList.remove('hidden');
         document.getElementById('current-user-display').innerText = currentUser.name;
+        document.getElementById('current-rank-display').innerText = currentUser.rank;
+        
+        // إذا كان قائد الاستخبارات أو نائبه، يتفعل بدون كود
+        if (currentUser.rank === "قائد الاستخبارات" || currentUser.rank === "نائب رئيس الاستخبارات") {
+            isCodeUnlocked = true;
+            document.getElementById('admin-box-container').style.display = "none";
+            document.getElementById('admin-actions-header').classList.remove('hidden');
+        }
+
         renderTable();
     }
 
-    function unlockAdmin() {
+    window.unlockAdmin = function() {
         const inputCode = document.getElementById('admin-code-input').value;
         const msg = document.getElementById('admin-msg');
 
         if (inputCode === ADMIN_SECRET) {
-            isAdmin = true;
+            isCodeUnlocked = true;
             msg.style.color = "var(--accent-green)";
-            msg.innerText = "✓ تم تفعيل صلاحيات القيادة العليا بنجاح!";
+            msg.innerText = "✓ تم التفعيل! يمكنك الآن ترقية/تعديل من هم أقل منك رتبة.";
             document.getElementById('admin-actions-header').classList.remove('hidden');
             renderTable();
         } else {
             msg.style.color = "var(--accent-red)";
             msg.innerText = "✕ كود السر غير صحيح!";
         }
-    }
+    };
 
     function renderTable() {
-        const agents = getAgents();
         const tbody = document.getElementById('agents-table-body');
+        if (!tbody || !currentUser) return;
         tbody.innerHTML = '';
 
-        agents.forEach((agent, index) => {
+        const myRankIndex = RANKS.indexOf(currentUser.rank);
+
+        globalAgents.forEach((agent) => {
             const tr = document.createElement('tr');
-            
+            const targetRankIndex = RANKS.indexOf(agent.rank);
+
             let actionsHTML = '';
-            if (isAdmin) {
-                let optionsHTML = RANKS.map(r => `<option value="${r}" ${r === agent.rank ? 'selected' : ''}>${r}</option>`).join('');
+
+            // كاين الصلاحية للتعديل غير إذا كان مدخل الكود (أو قائد) وَ الشخص المستهدف رتبته أقل قطعا من رتبة المستخدم الحالي
+            if (isCodeUnlocked && myRankIndex > targetRankIndex) {
+                // خيارات الترقيات المتاحة هي فقط الرتب التي تكون أقل من رتبة العميل الحالي
+                let allowedRanks = RANKS.slice(0, myRankIndex);
+                let optionsHTML = allowedRanks.map(r => `<option value="${r}" ${r === agent.rank ? 'selected' : ''}>${r}</option>`).join('');
 
                 actionsHTML = `
                     <td>
                         <div class="action-flex">
-                            <select id="rank-select-${index}">
+                            <select id="rank-select-${agent.id}">
                                 ${optionsHTML}
                             </select>
-                            <button class="btn-sm" onclick="setDirectRank(${index})">تطبيق</button>
-                            <button class="btn-sm btn-danger" style="background:#555;" onclick="deleteAgent(${index})">🗑️ طرد</button>
+                            <button class="btn-sm" onclick="setDirectRank('${agent.id}')">تطبيق</button>
+                            <button class="btn-sm btn-danger" style="background:#555;" onclick="deleteAgent('${agent.id}')">🗑️ طرد</button>
                         </div>
                     </td>
                 `;
+            } else if (isCodeUnlocked) {
+                actionsHTML = `<td><span style="font-size:11px; color:#777;">(رتبة أعلى منك/مساوية)</span></td>`;
             } else {
                 actionsHTML = `<td class="hidden"></td>`;
             }
@@ -359,34 +414,30 @@
         });
     }
 
-    function setDirectRank(index) {
-        const select = document.getElementById(`rank-select-${index}`);
+    window.setDirectRank = function(agentId) {
+        const select = document.getElementById(`rank-select-${agentId}`);
         const selectedRank = select.value;
+        set(ref(db, `agents/${agentId}/rank`), selectedRank);
+    };
 
-        let agents = getAgents();
-        agents[index].rank = selectedRank;
-        saveAgents(agents);
-        renderTable();
-    }
-
-    function deleteAgent(index) {
+    window.deleteAgent = function(agentId) {
         if (confirm("هل أنت تأكد من طرد هذا العميل من القاعدة؟")) {
-            let agents = getAgents();
-            agents.splice(index, 1);
-            saveAgents(agents);
-            renderTable();
+            remove(ref(db, `agents/${agentId}`));
         }
-    }
+    };
 
-    function logout() {
-        isAdmin = false;
+    window.logout = function() {
+        isCodeUnlocked = false;
         currentUser = null;
+        document.getElementById('password').value = '';
+        document.getElementById('login-error').innerText = '';
         document.getElementById('admin-code-input').value = '';
         document.getElementById('admin-msg').innerText = '';
+        document.getElementById('admin-box-container').style.display = "block";
         document.getElementById('admin-actions-header').classList.add('hidden');
         document.getElementById('dashboard-section').classList.add('hidden');
         document.getElementById('login-section').classList.remove('hidden');
-    }
+    };
 </script>
 
 </body>
