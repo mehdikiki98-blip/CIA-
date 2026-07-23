@@ -1,0 +1,377 @@
+<!DOCTYPE html>
+<html lang="ar" dir="rtl">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>نظام إدارة المخابرات المركزية | CIA SYSTEM</title>
+    <style>
+        :root {
+            --bg-color: #0d0f12;
+            --panel-bg: #161a22;
+            --accent-gold: #d4af37;
+            --accent-red: #e74c3c;
+            --accent-green: #2ecc71;
+            --text-color: #e0e6ed;
+            --border-color: #2c3240;
+        }
+
+        * {
+            box-sizing: border-box;
+            margin: 0;
+            padding: 0;
+            font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
+        }
+
+        body {
+            background-color: var(--bg-color);
+            color: var(--text-color);
+            display: flex;
+            justify-content: center;
+            align-items: center;
+            min-height: 100vh;
+            padding: 20px;
+        }
+
+        .container {
+            width: 100%;
+            max-width: 900px;
+            background-color: var(--panel-bg);
+            border: 1px solid var(--border-color);
+            border-top: 4px solid var(--accent-gold);
+            border-radius: 8px;
+            box-shadow: 0 10px 30px rgba(0, 0, 0, 0.8);
+            padding: 30px;
+        }
+
+        .header {
+            text-align: center;
+            margin-bottom: 30px;
+            border-bottom: 1px solid var(--border-color);
+            padding-bottom: 15px;
+        }
+
+        .header h1 {
+            color: var(--accent-gold);
+            font-size: 24px;
+            letter-spacing: 1px;
+            margin-bottom: 5px;
+        }
+
+        .header p {
+            font-size: 13px;
+            color: #8b949e;
+        }
+
+        .form-group {
+            margin-bottom: 20px;
+        }
+
+        label {
+            display: block;
+            margin-bottom: 8px;
+            font-size: 14px;
+            color: var(--accent-gold);
+        }
+
+        input, select {
+            width: 100%;
+            padding: 12px;
+            background: #0d1117;
+            border: 1px solid var(--border-color);
+            border-radius: 4px;
+            color: #fff;
+            font-size: 14px;
+            outline: none;
+        }
+
+        input:focus, select:focus {
+            border-color: var(--accent-gold);
+        }
+
+        button {
+            width: 100%;
+            padding: 12px;
+            background: var(--accent-gold);
+            color: #000;
+            font-weight: bold;
+            border: none;
+            border-radius: 4px;
+            cursor: pointer;
+            transition: 0.3s;
+        }
+
+        button:hover {
+            background: #b59228;
+        }
+
+        .btn-danger {
+            background: var(--accent-red);
+            color: #fff;
+        }
+
+        .btn-danger:hover {
+            background: #c0392b;
+        }
+
+        .btn-sm {
+            padding: 6px 10px;
+            font-size: 12px;
+            width: auto;
+            margin: 2px;
+        }
+
+        .hidden {
+            display: none;
+        }
+
+        table {
+            width: 100%;
+            border-collapse: collapse;
+            margin-top: 20px;
+        }
+
+        th, td {
+            padding: 12px;
+            text-align: right;
+            border-bottom: 1px solid var(--border-color);
+            font-size: 14px;
+        }
+
+        th {
+            background-color: #0d1117;
+            color: var(--accent-gold);
+        }
+
+        .badge {
+            padding: 4px 8px;
+            border-radius: 4px;
+            font-size: 12px;
+            font-weight: bold;
+            background: #21262d;
+            color: var(--accent-gold);
+            border: 1px solid var(--accent-gold);
+        }
+
+        .admin-box {
+            background: #0d1117;
+            border: 1px dashed var(--accent-gold);
+            padding: 15px;
+            border-radius: 6px;
+            margin-bottom: 25px;
+        }
+
+        .top-bar {
+            display: flex;
+            justify-content: space-between;
+            align-items: center;
+            margin-bottom: 20px;
+        }
+    </style>
+</head>
+<body>
+
+<div class="container">
+    <div class="header">
+        <h1>🌐 نظام الاستخبارات العامة | CIA DATABASE</h1>
+        <p>نظام إلكتروني سري لمتابعة وإدارة الرتب والعملاء</p>
+    </div>
+
+    <!-- 1. صفحة التسجيل والدخول -->
+    <div id="login-section">
+        <h2 style="margin-bottom: 15px; font-size: 18px;">تسجيل الدخول / الانضمام للنظام</h2>
+        <form id="login-form">
+            <div class="form-group">
+                <label for="username">الاسم الكامل / الرمز:</label>
+                <input type="text" id="username" placeholder="أدخل اسمك..." required>
+            </div>
+            <div class="form-group">
+                <label for="initial-rank">الرتبة الأولية:</label>
+                <select id="initial-rank">
+                    <option value="عميل متدرب">عميل متدرب (Agent Trainee)</option>
+                    <option value="عميل ميداني">عميل ميداني (Field Agent)</option>
+                    <option value="محلل استخبارات">محلل استخبارات (Intelligence Analyst)</option>
+                </select>
+            </div>
+            <button type="submit">دخول النظام</button>
+        </form>
+    </div>
+
+    <!-- 2. لوحة النظام الرئيسية -->
+    <div id="dashboard-section" class="hidden">
+        <div class="top-bar">
+            <div>أهلاً بك، <span id="current-user-display" style="color: var(--accent-gold); font-weight: bold;"></span></div>
+            <button class="btn-danger btn-sm" onclick="logout()">تسجيل الخروج</button>
+        </div>
+
+        <!-- منطقة تفعيل وضع الأدمن -->
+        <div class="admin-box">
+            <h3 style="font-size: 14px; margin-bottom: 10px; color: var(--accent-gold);">🔓 صلاحيات الإدارة العليا (قيادة الجهاز)</h3>
+            <div style="display: flex; gap: 10px;">
+                <input type="password" id="admin-code-input" placeholder="أدخل كود الأدمن السرّي...">
+                <button style="width: 150px;" onclick="unlockAdmin()">تفعيل</button>
+            </div>
+            <p id="admin-msg" style="font-size: 12px; margin-top: 5px;"></p>
+        </div>
+
+        <!-- قائمة العملاء والترقيات -->
+        <h3>📋 سجل العملاء والرتب الحالية</h3>
+        <table>
+            <thead>
+                <tr>
+                    <th>الاسم / الكود</th>
+                    <th>الرتبة الحالية</th>
+                    <th id="admin-actions-header" class="hidden">التحكم بالترقية / التنزيل</th>
+                </tr>
+            </thead>
+            <tbody id="agents-table-body">
+                <!-- كايتزاد هنا بـ JS -->
+            </tbody>
+        </table>
+    </div>
+</div>
+
+<script>
+    // قائمة الرتب بالترتيب من الأدنى للأعلى
+    const RANKS = [
+        "عميل متدرب",
+        "عميل ميداني",
+        "محلل استخبارات",
+        "ضابط عمليات",
+        "قائد فرقة",
+        "مدير الاستخبارات"
+    ];
+
+    const ADMIN_SECRET = "CIA2026";
+    let isAdmin = false;
+    let currentUser = null;
+
+    // جلب البيانات من LocalStorage
+    function getAgents() {
+        const data = localStorage.getItem('cia_agents');
+        return data ? JSON.parse(data) : [];
+    }
+
+    function saveAgents(agents) {
+        localStorage.setItem('cia_agents', JSON.stringify(agents));
+    }
+
+    // تسجيل الدخول
+    document.getElementById('login-form').addEventListener('submit', function(e) {
+        e.preventDefault();
+        const name = document.getElementById('username').value.trim();
+        const rank = document.getElementById('initial-rank').value;
+
+        if (!name) return;
+
+        let agents = getAgents();
+        let existingUser = agents.find(a => a.name.toLowerCase() === name.toLowerCase());
+
+        if (!existingUser) {
+            existingUser = { name: name, rank: rank };
+            agents.push(existingUser);
+            saveAgents(agents);
+        }
+
+        currentUser = existingUser;
+        showDashboard();
+    });
+
+    function showDashboard() {
+        document.getElementById('login-section').classList.add('hidden');
+        document.getElementById('dashboard-section').classList.remove('hidden');
+        document.getElementById('current-user-display').innerText = currentUser.name;
+        renderTable();
+    }
+
+    // فتح صلاحيات الأدمن بالكود CIA2026
+    function unlockAdmin() {
+        const inputCode = document.getElementById('admin-code-input').value;
+        const msg = document.getElementById('admin-msg');
+
+        if (inputCode === ADMIN_SECRET) {
+            isAdmin = true;
+            msg.style.color = "var(--accent-green)";
+            msg.innerText = "✓ تم تفعيل صلاحيات القيادة العليا بنجاح!";
+            document.getElementById('admin-actions-header').classList.remove('hidden');
+            renderTable();
+        } else {
+            msg.style.color = "var(--accent-red)";
+            msg.innerText = "✕ كود السر غير صحيح!";
+        }
+    }
+
+    // عرض جدول العملاء
+    function renderTable() {
+        const agents = getAgents();
+        const tbody = document.getElementById('agents-table-body');
+        tbody.innerHTML = '';
+
+        agents.forEach((agent, index) => {
+            const tr = document.createElement('tr');
+            
+            let actionsHTML = '';
+            if (isAdmin) {
+                actionsHTML = `
+                    <td class="admin-actions">
+                        <button class="btn-sm" onclick="changeRank(${index}, 1)">▲ ترقية</button>
+                        <button class="btn-sm btn-danger" onclick="changeRank(${index}, -1)">▼ تنزيل</button>
+                        <button class="btn-sm btn-danger" style="background:#555;" onclick="deleteAgent(${index})">🗑️ طرد</button>
+                    </td>
+                `;
+            } else {
+                actionsHTML = `<td class="hidden"></td>`;
+            }
+
+            tr.innerHTML = `
+                <td><strong>${agent.name}</strong></td>
+                <td><span class="badge">${agent.rank}</span></td>
+                ${actionsHTML}
+            `;
+            tbody.appendChild(tr);
+        });
+    }
+
+    // تغيير الرتبة (ترقية / تنزيل)
+    function changeRank(index, direction) {
+        let agents = getAgents();
+        let currentRankIndex = RANKS.indexOf(agents[index].rank);
+
+        // إذا كانت الرتبة غير معترفة بها نردوها للأولى
+        if (currentRankIndex === -1) currentRankIndex = 0;
+
+        let newIndex = currentRankIndex + direction;
+
+        if (newIndex >= 0 && newIndex < RANKS.length) {
+            agents[index].rank = RANKS[newIndex];
+            saveAgents(agents);
+            renderTable();
+        } else if (newIndex >= RANKS.length) {
+            alert("وصل لأعلى رتبة ف السيستيم!");
+        } else {
+            alert("وصل لأدنى رتبة!");
+        }
+    }
+
+    // مسح عنصر من السيستيم
+    function deleteAgent(index) {
+        if (confirm("هل أنت تأكد من طرد هذا العميل من القاعدة؟")) {
+            let agents = getAgents();
+            agents.splice(index, 1);
+            saveAgents(agents);
+            renderTable();
+        }
+    }
+
+    function logout() {
+        isAdmin = false;
+        currentUser = null;
+        document.getElementById('admin-code-input').value = '';
+        document.getElementById('admin-msg').innerText = '';
+        document.getElementById('admin-actions-header').classList.add('hidden');
+        document.getElementById('dashboard-section').classList.add('hidden');
+        document.getElementById('login-section').classList.remove('hidden');
+    }
+</script>
+
+</body>
+</html>
