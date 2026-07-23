@@ -185,11 +185,11 @@
                 <input type="text" id="username" placeholder="أدخل اسمك..." required>
             </div>
             <div class="form-group">
-                <label for="initial-rank">الرتبة الأولية:</label>
+                <label for="initial-rank">الرتبة الأولية عند التسجيل:</label>
                 <select id="initial-rank">
+                    <option value="مستجد">مستجد (New Recruit)</option>
                     <option value="عميل متدرب">عميل متدرب (Agent Trainee)</option>
                     <option value="عميل ميداني">عميل ميداني (Field Agent)</option>
-                    <option value="محلل استخبارات">محلل استخبارات (Intelligence Analyst)</option>
                 </select>
             </div>
             <button type="submit">دخول النظام</button>
@@ -231,13 +231,15 @@
 </div>
 
 <script>
-    // قائمة الرتب بالترتيب من الأدنى للأعلى
+    // الترتيب الجديد للرتب يبدأ من "مستجد" حتى "مدير الاستخبارات"
     const RANKS = [
+        "مستجد",
         "عميل متدرب",
         "عميل ميداني",
         "محلل استخبارات",
         "ضابط عمليات",
         "قائد فرقة",
+        "نائب المدير",
         "مدير الاستخبارات"
     ];
 
@@ -245,7 +247,6 @@
     let isAdmin = false;
     let currentUser = null;
 
-    // جلب البيانات من LocalStorage
     function getAgents() {
         const data = localStorage.getItem('cia_agents');
         return data ? JSON.parse(data) : [];
@@ -255,7 +256,6 @@
         localStorage.setItem('cia_agents', JSON.stringify(agents));
     }
 
-    // تسجيل الدخول
     document.getElementById('login-form').addEventListener('submit', function(e) {
         e.preventDefault();
         const name = document.getElementById('username').value.trim();
@@ -283,7 +283,6 @@
         renderTable();
     }
 
-    // فتح صلاحيات الأدمن بالكود CIA2026
     function unlockAdmin() {
         const inputCode = document.getElementById('admin-code-input').value;
         const msg = document.getElementById('admin-msg');
@@ -300,7 +299,6 @@
         }
     }
 
-    // عرض جدول العملاء
     function renderTable() {
         const agents = getAgents();
         const tbody = document.getElementById('agents-table-body');
@@ -331,12 +329,10 @@
         });
     }
 
-    // تغيير الرتبة (ترقية / تنزيل)
     function changeRank(index, direction) {
         let agents = getAgents();
         let currentRankIndex = RANKS.indexOf(agents[index].rank);
 
-        // إذا كانت الرتبة غير معترفة بها نردوها للأولى
         if (currentRankIndex === -1) currentRankIndex = 0;
 
         let newIndex = currentRankIndex + direction;
@@ -348,11 +344,10 @@
         } else if (newIndex >= RANKS.length) {
             alert("وصل لأعلى رتبة ف السيستيم!");
         } else {
-            alert("وصل لأدنى رتبة!");
+            alert("وصل لأدنى رتبة (مستجد)!");
         }
     }
 
-    // مسح عنصر من السيستيم
     function deleteAgent(index) {
         if (confirm("هل أنت تأكد من طرد هذا العميل من القاعدة؟")) {
             let agents = getAgents();
