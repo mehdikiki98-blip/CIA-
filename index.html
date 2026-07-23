@@ -187,9 +187,9 @@
             <div class="form-group">
                 <label for="initial-rank">الرتبة الأولية عند التسجيل:</label>
                 <select id="initial-rank">
-                    <option value="مستجد">مستجد (New Recruit)</option>
-                    <option value="عميل متدرب">عميل متدرب (Agent Trainee)</option>
-                    <option value="عميل ميداني">عميل ميداني (Field Agent)</option>
+                    <option value="مستجد">مستجد</option>
+                    <option value="جندي">جندي</option>
+                    <option value="جندي اول">جندي اول</option>
                 </select>
             </div>
             <button type="submit">دخول النظام</button>
@@ -231,16 +231,25 @@
 </div>
 
 <script>
-    // الترتيب الجديد للرتب يبدأ من "مستجد" حتى "مدير الاستخبارات"
+    // الرتب العسكرية الكاملة كما في الصور بالترتيب التنازلي إلى التصاعدي
     const RANKS = [
         "مستجد",
-        "عميل متدرب",
-        "عميل ميداني",
-        "محلل استخبارات",
-        "ضابط عمليات",
-        "قائد فرقة",
-        "نائب المدير",
-        "مدير الاستخبارات"
+        "جندي",
+        "جندي اول",
+        "عريف",
+        "وكيل رقيب",
+        "رقيب",
+        "رقيب اول",
+        "رئيس رقباء",
+        "ملازم",
+        "ملازم اول",
+        "نقيب",
+        "رائد",
+        "مقدم",
+        "عقيد",
+        "عميد",
+        "فريق",
+        "فريق اول"
     ];
 
     const ADMIN_SECRET = "CIA2026";
@@ -342,7 +351,7 @@
             saveAgents(agents);
             renderTable();
         } else if (newIndex >= RANKS.length) {
-            alert("وصل لأعلى رتبة ف السيستيم!");
+            alert("وصل لأعلى رتبة (فريق اول)!");
         } else {
             alert("وصل لأدنى رتبة (مستجد)!");
         }
